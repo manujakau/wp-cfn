@@ -29,6 +29,42 @@ Parameters:
     Type: String
     Default: 10.192.21.0/24
 
+  KeyName:
+    Description: WordPress Public key
+    Type: List<AWS::EC2::KeyPair::KeyName>
+    Default: SAA-C01
+
+  InstanceType:
+    Description: "EC2 type"
+    Type: String
+    Default: t2-micro
+
+  MaxSizeASG:
+    Description: "ASG max capacity"
+    Type: String
+    Default: 2
+
+  MinSizeASG:
+    Description: "ASG min capacity"
+    Type: String
+    Default: 1
+
+  DesiredCapacityASG:
+    Description: "ASG desired capacity"
+    Type: String
+    Default: 1
+
+
+Mappings:
+  RegionMap:
+    eu-central-1:
+      HVM64: "ami-0502e817a62226e03"
+    eu-north-1:
+      HVM64: "ami-0a3a4169ad7cb0d77"
+
+
+#Network
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
