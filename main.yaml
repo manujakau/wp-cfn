@@ -251,14 +251,6 @@ Resources:
     Properties:
       GroupId: !Ref WordPressSG
       IpProtocol: tcp
-      FromPort: '443'
-      ToPort: '443'
-      CidrIp: 0.0.0.0/0
-  ingress2:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      GroupId: !Ref WordPressSG
-      IpProtocol: tcp
       FromPort: '22'
       ToPort: '22'
       CidrIp: 0.0.0.0/0
@@ -269,36 +261,91 @@ Resources:
       IpProtocol: '-1'
       CidrIp: 0.0.0.0/0
 
+  ELBSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "elb-wordpress-sg"
+      GroupDescription: "WordPress ELB SecurityGroup"
+      VpcId: !Ref VPC
+  ingress2:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref ELBSG
+      IpProtocol: tcp
+      FromPort: '80'
+      ToPort: '80'
+      CidrIp: 0.0.0.0/0
+
+  RDSSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "rds-wordpress-sg"
+      GroupDescription: "WordPress DB SecurityGroup"
+      VpcId: !Ref VPC
+  ingress3:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref RDSSG
+      IpProtocol: tcp
+      FromPort: '3306'
+      ToPort: '3306'
+      SourceSecurityGroupId: !Ref WordPressSG
+
+
+#Load Balancer
+
+  ELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      Subnets:
+        - !Ref PrivSub1
+        - !Ref PrivSub2
+      LoadBalancerName: !Join [ "-", [ !Ref EnvName, ELB ]]
+      Listeners:
+        - InstancePort: '80'
+          InstanceProtocol: HTTP
+          LoadBalancerPort: '80'
+          Protocol: HTTP
+      HealthCheck:
+        HealthyThreshold: '2'
+        UnhealthyThreshold: '3'
+        Interval: '8'
+        Timeout: '5'
+        Target: TCP:80/
+      SecurityGroups:
+        - !Ref ELBSG
+      Scheme: 'internet-facing'
+      CrossZone: 'true'
 
 #Compute
 
-  LC:
-    Type: AWS::AutoScaling::LaunchConfiguration
-    Properties:
-      KeyName: !Ref KeyName
-      ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", HVM64 ]     
-      SecurityGroups:
-        - !Ref WordPressSG
-      InstanceType: !Ref InstanceType
-      LaunchConfigurationName: !Join [ "-", [ !Ref EnvName, LaunchConfig ]]
-
-  ASG:
-    Type: AWS::AutoScaling::AutoScalingGroup
-    Properties:
-      AutoScalingGroupName: !Join [ "-", [ !Ref EnvName, AutoScallingGroup ]]
-      Cooldown: 120
-      DesiredCapacity: !Ref DesiredCapacityASG
-      LaunchConfigurationName: !Ref LC
-      MaxSize: !Ref MaxSizeASG
-      MinSize: !Ref MinSizeASG
-      VPCZoneIdentifier:
-        - !Ref PrivSub1
-        - !Ref PrivSub2
-      Tags:
-        - 
-          Key: Name
-          Value: WordPress ASG
-          PropagateAtLaunch: 'true'
+#  LC:
+#    Type: AWS::AutoScaling::LaunchConfiguration
+#    Properties:
+#      KeyName: !Ref KeyName
+#      ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", HVM64 ]     
+#      SecurityGroups:
+#        - !Ref WordPressSG
+#      InstanceType: !Ref InstanceType
+#      LaunchConfigurationName: !Join [ "-", [ !Ref EnvName, LaunchConfig ]]
+#
+#  ASG:
+#    Type: AWS::AutoScaling::AutoScalingGroup
+#    Properties:
+#      AutoScalingGroupName: !Join [ "-", [ !Ref EnvName, AutoScallingGroup ]]
+#      Cooldown: 120
+#      DesiredCapacity: !Ref DesiredCapacityASG
+#      LaunchConfigurationName: !Ref LC
+#      MaxSize: !Ref MaxSizeASG
+#      MinSize: !Ref MinSizeASG
+#      VPCZoneIdentifier:
+#        - !Ref PrivSub1
+#        - !Ref PrivSub2
+#      Tags:
+#        - 
+#          Key: Name
+#          Value: WordPress ASG
+#          PropagateAtLaunch: 'true'
 
 
 Outputs:
