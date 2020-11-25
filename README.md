@@ -1,6 +1,6 @@
-## WordPress CloudFormation Templates
+# WordPress CloudFormation Templates
 
-# WordPress Infrastrcture
+## WordPress Stack Infrastrcture
 
 ![WordPress](https://user-images.githubusercontent.com/44127516/100247762-5a589080-2f43-11eb-80a7-8e15d48851ae.jpg)
 
@@ -12,7 +12,7 @@ diagram keys:
   AZ0-1 - Availability Zone 1 & 2
   
 
-# Deploy WordPress Stack
+## Deploy WordPress Stack
   
     1. Install aws cli
     2. Configure AWS profile
@@ -21,7 +21,7 @@ diagram keys:
         
     *Also stack can be deploy via AWS Cloud-Formation GUI.
 
-# Troubleshoot Request Timeout
+## Troubleshoot Request Timeout
   
  If load-balancer url getting timeout, check WordPress VPC default security group. If the security group ingress referring to itself like first image, then modify the ingress to allow all traffic like in second image.
  
