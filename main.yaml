@@ -113,13 +113,6 @@ Parameters:
       - 'true'
       - 'false'
 
-  SSHcidr:
-    Description: SSH into WP EC2
-    Type: String
-    MinLength: '9'
-    MaxLength: '18'
-    Default: 0.0.0.0/0
-
 Mappings:
   AMItype:
     t1.micro:
@@ -423,7 +416,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: '22'
           ToPort: '22'
-          CidrIp: !Ref SSHcidr
+          SourceSecurityGroupId: !Ref WPbastionSG
       VpcId: !Ref VPC
       Tags:
         - Key: Name
@@ -637,6 +630,52 @@ Resources:
       SubnetIds:
         - !Ref DBSub1
         - !Ref DBSub2
+
+  BastionHost:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      ImageId: ami-009b16df9fcaac611
+      InstanceType: t2.micro
+      KeyName: SAA-C01
+      Monitoring: 'true'
+      NetworkInterfaces:
+        - DeleteOnTermination: 'true'
+          Description: Primary network interface
+          DeviceIndex: 0
+          SubnetId: !Ref PubSub1
+          GroupSet:
+            - !Ref WPbastionSG
+          AssociatePublicIpAddress: 'true'
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 30
+            VolumeType: gp2
+      Tags:
+      -
+        Key: "Name"
+        Value: "WP Bastion Host"
+
+  WPbastionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: "bastion-wordpress-sg"
+      GroupDescription: "WordPress Bastion SecurityGroup"
+      VpcId: !Ref VPC
+  ingress0:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref WPbastionSG
+      IpProtocol: '-1'
+      CidrIp: 0.0.0.0/0
+  ingress1:
+    Type: 'AWS::EC2::SecurityGroupIngress'
+    Properties:
+      GroupId: !Ref WPbastionSG
+      IpProtocol: tcp
+      FromPort: '22'
+      ToPort: '22'
+      CidrIp: 0.0.0.0/0
 
 Outputs:
   SiteURL:
