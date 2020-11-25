@@ -1,8 +1,9 @@
+AWSTemplateFormatVersion: 2010-09-09
 Parameters:
   EnvName:
     Description: Environment name tag
     Type: String
-    Default: WordPress-Infra
+    Default: WordPressInfra
 
   VpcCIDR:
     Description: Main VPC CIDR
@@ -29,20 +30,55 @@ Parameters:
     Type: String
     Default: 10.192.21.0/24
 
-  KeyName:
-    Description: WordPress Public key
+  DBSubCIDR1:
+    Description: DB Subnet One
     Type: String
+    Default: 10.192.30.0/24
+
+  DBSubCIDR2:
+    Description: DB Subnet Two
+    Type: String
+    Default: 10.192.31.0/24
+
+  KeyName:
+    Description: WordPress SSH Public key
+    Type: 'AWS::EC2::KeyPair::KeyName'
     Default: SAA-C01
 
   InstanceType:
-    Description: "EC2 type"
+    Description: EC2 type
     Type: String
-    Default: t2.micro
+    Default: t2.small
+    AllowedValues:
+      - t1.micro
+      - t2.nano
+      - t2.micro
+      - t2.small
+      - t2.medium
+      - t2.large
+
+  DBClass:
+    Description: DB Type
+    Type: String
+    Default: db.t2.medium
+    AllowedValues:
+      - db.t1.micro
+      - db.t2.micro
+      - db.t2.small
+      - db.t2.medium
+      - db.t2.large
+
+  DBAllocatedStorage:
+    Default: '5'
+    Description: DB storage
+    Type: Number
+    MinValue: '5'
+    MaxValue: '1024'
 
   MaxSizeASG:
     Description: "ASG max capacity"
     Type: String
-    Default: 2
+    Default: 3
 
   MinSizeASG:
     Description: "ASG min capacity"
@@ -52,18 +88,74 @@ Parameters:
   DesiredCapacityASG:
     Description: "ASG desired capacity"
     Type: String
-    Default: 1
+    Default: 2
 
+  DBNAME:
+    Description: Wordpress DB name
+    Type: String
+    Default: wordpress
+
+  DBUSER:
+    Description: Wordpress DB user
+    Type: String
+    Default: wordpress
+
+  DBPASSWORD:
+    Description: Wordpress DB password
+    Type: String
+    Default: wordpress
+
+  MultiAZDatabase:
+    Default: 'true'
+    Description: Multi-AZ RDS
+    Type: String
+    AllowedValues:
+      - 'true'
+      - 'false'
+
+  SSHcidr:
+    Description: SSH into WP EC2
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
 
 Mappings:
+  AMItype:
+    t1.micro:
+      Arch: HVM64
+    t2.nano:
+      Arch: HVM64
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+    t2.medium:
+      Arch: HVM64
+    t2.large:
+      Arch: HVM64
+
+  AMItype2:
+    t1.micro:
+      Arch: NATHVM64
+    t2.nano:
+      Arch: NATHVM64
+    t2.micro:
+      Arch: NATHVM64
+    t2.small:
+      Arch: NATHVM64
+    t2.medium:
+      Arch: NATHVM64
+    t2.large:
+      Arch: NATHVM64
+
   RegionMap:
     eu-central-1:
-      HVM64: "ami-0502e817a62226e03"
+      HVM64: ami-0474863011a7d1541
+      HVMG2: ami-0aa1822e3eb913a11
     eu-north-1:
-      HVM64: "ami-0a3a4169ad7cb0d77"
-
-
-#Network
+      HVM64: ami-0de4b8910494dba0f
+      HVMG2: ami-32d55b4c
 
 Resources:
   VPC:
@@ -137,7 +229,29 @@ Resources:
         - Key: Name
           Value: !Sub ${EnvName} Private-Subnet-2
 
-#NatGateway EIPs
+  DBSub1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 0, !GetAZs  '' ]
+      CidrBlock: !Ref DBSubCIDR1
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvName} DB-Subnet-1
+
+  DBSub2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Select [ 1, !GetAZs  '' ]
+      CidrBlock: !Ref DBSubCIDR2
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvName} DB-Subnet-2
+
+#NatGateway EIP
 
   NatGWEIP1:
     Type: AWS::EC2::EIP
@@ -230,153 +344,115 @@ Resources:
       RouteTableId: !Ref PrivRTB2
       SubnetId: !Ref PrivSub2
 
-#Wordpress SecurityGroup
-
-  WordPressSG:
-    Type: AWS::EC2::SecurityGroup
+  DBRTB1:
+    Type: AWS::EC2::RouteTable
     Properties:
-      GroupName: "wordpress-sg"
-      GroupDescription: "WordPress SecurityGroup"
       VpcId: !Ref VPC
-  ingress0:
-    Type: 'AWS::EC2::SecurityGroupIngress'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvName} DB-Routes-1
+  DBSub1RTBasso:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      GroupId: !Ref WordPressSG
-      IpProtocol: tcp
-      FromPort: '80'
-      ToPort: '80'
-      CidrIp: 0.0.0.0/0
-  ingress1:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      GroupId: !Ref WordPressSG
-      IpProtocol: tcp
-      FromPort: '22'
-      ToPort: '22'
-      CidrIp: 0.0.0.0/0
-  egress1:
-    Type: 'AWS::EC2::SecurityGroupEgress'
-    Properties:
-      GroupId: !Ref WordPressSG
-      IpProtocol: '-1'
-      CidrIp: 0.0.0.0/0
+      RouteTableId: !Ref DBRTB1
+      SubnetId: !Ref DBSub1
 
-  ELBSG:
-    Type: AWS::EC2::SecurityGroup
+  DBRTB2:
+    Type: AWS::EC2::RouteTable
     Properties:
-      GroupName: "elb-wordpress-sg"
-      GroupDescription: "WordPress ELB SecurityGroup"
       VpcId: !Ref VPC
-  ingress2:
-    Type: 'AWS::EC2::SecurityGroupIngress'
+      Tags:
+        - Key: Name
+          Value: !Sub ${EnvName} DB-Routes-2
+  DBSub2RTBasso:
+    Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      GroupId: !Ref ELBSG
-      IpProtocol: tcp
-      FromPort: '80'
-      ToPort: '80'
-      CidrIp: 0.0.0.0/0
-
-  RDSSG:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: "rds-wordpress-sg"
-      GroupDescription: "WordPress DB SecurityGroup"
-      VpcId: !Ref VPC
-  ingress3:
-    Type: 'AWS::EC2::SecurityGroupIngress'
-    Properties:
-      GroupId: !Ref RDSSG
-      IpProtocol: tcp
-      FromPort: '3306'
-      ToPort: '3306'
-      SourceSecurityGroupId: !Ref WordPressSG
-
-
-#Load Balancer
-
-  ELB:
-    Type: AWS::ElasticLoadBalancing::LoadBalancer
-    Properties:
-      Subnets:
-        - !Ref PrivSub1
-        - !Ref PrivSub2
-      LoadBalancerName: !Join [ "-", [ !Ref EnvName, ELB ]]
-      Listeners:
-        - InstancePort: '80'
-          InstanceProtocol: HTTP
-          LoadBalancerPort: '80'
-          Protocol: HTTP
-      HealthCheck:
-        HealthyThreshold: '2'
-        UnhealthyThreshold: '3'
-        Interval: '8'
-        Timeout: '5'
-        Target: TCP:80/
-      SecurityGroups:
-        - !Ref ELBSG
-      Scheme: 'internet-facing'
-      CrossZone: 'true'
+      RouteTableId: !Ref DBRTB2
+      SubnetId: !Ref DBSub2
 
 #Compute
 
-#  LC:
-#    Type: AWS::AutoScaling::LaunchConfiguration
-#    Properties:
-#      KeyName: !Ref KeyName
-#      ImageId: !FindInMap [ RegionMap, !Ref "AWS::Region", HVM64 ]     
-#      SecurityGroups:
-#        - !Ref WordPressSG
-#      InstanceType: !Ref InstanceType
-#      LaunchConfigurationName: !Join [ "-", [ !Ref EnvName, LaunchConfig ]]
-#
-#  ASG:
-#    Type: AWS::AutoScaling::AutoScalingGroup
-#    Properties:
-#      AutoScalingGroupName: !Join [ "-", [ !Ref EnvName, AutoScallingGroup ]]
-#      Cooldown: 120
-#      DesiredCapacity: !Ref DesiredCapacityASG
-#      LaunchConfigurationName: !Ref LC
-#      MaxSize: !Ref MaxSizeASG
-#      MinSize: !Ref MinSizeASG
-#      VPCZoneIdentifier:
-#        - !Ref PrivSub1
-#        - !Ref PrivSub2
-#      Tags:
-#        - 
-#          Key: Name
-#          Value: WordPress ASG
-#          PropagateAtLaunch: 'true'
+  ALB:
+    Type: 'AWS::ElasticLoadBalancingV2::LoadBalancer'
+    Properties:
+      Subnets:
+        - !Ref PubSub1
+        - !Ref PubSub2
+      Name: !Join [ "-", [ !Ref EnvName, ALB ]]
+  ALBListener:
+    Type: 'AWS::ElasticLoadBalancingV2::Listener'
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+      LoadBalancerArn: !Ref ALB
+      Port: '80'
+      Protocol: HTTP
+  ALBTargetGroup:
+    Type: 'AWS::ElasticLoadBalancingV2::TargetGroup'
+    Properties:
+      HealthCheckPath: /wordpress/wp-admin/install.php
+      HealthCheckIntervalSeconds: 10
+      HealthCheckTimeoutSeconds: 5
+      HealthyThresholdCount: 2
+      Port: 80
+      Protocol: HTTP
+      UnhealthyThresholdCount: 5
+      VpcId: !Ref VPC
+      TargetGroupAttributes:
+        - Key: stickiness.enabled
+          Value: 'true'
+        - Key: stickiness.type
+          Value: lb_cookie
+        - Key: stickiness.lb_cookie.duration_seconds
+          Value: '30'
+
+  WpHostSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: WP server SG
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '80'
+          ToPort: '80'
+          SourceSecurityGroupId: !Select 
+            - 0
+            - !GetAtt 
+              - ALB
+              - SecurityGroups
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref SSHcidr
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: WordPress ec2 SG
+
+  WpEC2Group:
+    Type: 'AWS::AutoScaling::AutoScalingGroup'
+    Properties:
+      VPCZoneIdentifier:
+        - !Ref PrivSub1
+        - !Ref PrivSub2
+      LaunchConfigurationName: !Ref LaunchConfig
+      MinSize: !Ref MinSizeASG
+      MaxSize: !Ref MaxSizeASG
+      DesiredCapacity: !Ref DesiredCapacityASG
+      TargetGroupARNs:
+        - !Ref ALBTargetGroup
+    CreationPolicy:
+      ResourceSignal:
+        Timeout: PT5M
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: '1'
+        MaxBatchSize: '1'
+        PauseTime: PT5M
+        WaitOnResourceSignals: 'true'
 
 
 Outputs:
-  VPC:
-    Description: A reference to the created VPC
-    Value: !Ref VPC
-
-  PublicSubnets:
-    Description: A list of the public subnets
-    Value: !Join [ ",", [ !Ref PubSub1, !Ref PubSub2 ]]
-
-  PrivateSubnets:
-    Description: A list of the private subnets
-    Value: !Join [ ",", [ !Ref PrivSub1, !Ref PrivSub2 ]]
-
-  PublicSubnet1:
-    Description: A reference to the public subnet in the 1st Availability Zone
-    Value: !Ref PubSub1
-
-  PublicSubnet2:
-    Description: A reference to the public subnet in the 2nd Availability Zone
-    Value: !Ref PubSub2
-
-  PrivateSubnet1:
-    Description: A reference to the private subnet in the 1st Availability Zone
-    Value: !Ref PrivSub1
-
-  PrivateSubnet2:
-    Description: A reference to the private subnet in the 2nd Availability Zone
-    Value: !Ref PrivSub2
-
-  SecurityGroup:
-    Description: Security group with no ingress rule
-    Value: !Ref WordPressSG
+  SiteURL:
+    Value: !Join [ "", [ http://, !GetAtt ALB.DNSName ]]   
+    Description: "URL to Wordpress site"
