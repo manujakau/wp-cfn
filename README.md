@@ -1,6 +1,6 @@
 # WordPress CloudFormation Templates
 
-## WordPress Stack Infrastrcture
+## WordPress Stack Infrastructure
 
 ![WordPress](https://user-images.githubusercontent.com/44127516/100247762-5a589080-2f43-11eb-80a7-8e15d48851ae.jpg)
 
