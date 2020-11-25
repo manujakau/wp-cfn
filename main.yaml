@@ -451,6 +451,159 @@ Resources:
         PauseTime: PT5M
         WaitOnResourceSignals: 'true'
 
+  LaunchConfig:
+    Type: 'AWS::AutoScaling::LaunchConfiguration'
+    Metadata:
+      'AWS::CloudFormation::Init':
+        configSets:
+          wordpress_install:
+            - install_cfn
+            - install_wordpress
+        install_cfn:
+          files:
+            /etc/cfn/cfn-hup.conf:
+              content: !Join 
+                - ''
+                - - |
+                    [main]
+                  - stack=
+                  - !Ref 'AWS::StackId'
+                  - |+
+
+                  - region=
+                  - !Ref 'AWS::Region'
+                  - |+
+
+              mode: '000400'
+              owner: root
+              group: root
+            /etc/cfn/hooks.d/cfn-auto-reloader.conf:
+              content: !Join 
+                - ''
+                - - |
+                    [cfn-auto-reloader-hook]
+                  - |
+                    triggers=post.update
+                  - >
+                    path=Resources.LaunchConfig.Metadata.AWS::CloudFormation::Init
+                  - 'action=/opt/aws/bin/cfn-init -v '
+                  - '         --stack '
+                  - !Ref 'AWS::StackName'
+                  - '         --resource LaunchConfig '
+                  - '         --configsets wordpress_install '
+                  - '         --region '
+                  - !Ref 'AWS::Region'
+                  - |+
+
+              mode: '000400'
+              owner: root
+              group: root
+          services:
+            sysvinit:
+              cfn-hup:
+                enabled: 'true'
+                ensureRunning: 'true'
+                files:
+                  - /etc/cfn/cfn-hup.conf
+                  - /etc/cfn/hooks.d/cfn-auto-reloader.conf
+        install_wordpress:
+          packages:
+            yum:
+              php73: []
+              php73-mysqlnd: []
+              mysql57: []
+              httpd24: []
+          sources:
+            /var/www/html: 'http://wordpress.org/latest.tar.gz'
+          files:
+            /tmp/create-wp-config:
+              content: !Join 
+                - ''
+                - - |
+                    #!/bin/bash
+                  - >
+                    cp /var/www/html/wordpress/wp-config-sample.php
+                    /var/www/html/wordpress/wp-config.php
+                  - sed -i "s/'database_name_here'/'
+                  - !Ref DBNAME
+                  - |
+                    '/g" wp-config.php
+                  - sed -i "s/'username_here'/'
+                  - !Ref DBUSER
+                  - |
+                    '/g" wp-config.php
+                  - sed -i "s/'password_here'/'
+                  - !Ref DBPASSWORD
+                  - |
+                    '/g" wp-config.php
+                  - sed -i "s/'localhost'/'
+                  - !GetAtt 
+                    - RDSDB
+                    - Endpoint.Address
+                  - |
+                    '/g" wp-config.php
+                  - >
+                    sed -i 's#DocumentRoot "/var/www/html"#DocumentRoot
+                    "/var/www/html/wordpress"#g' /etc/httpd/conf/httpd.conf
+              mode: '000500'
+              owner: root
+              group: root
+          commands:
+            01_configure_wordpress:
+              command: /tmp/create-wp-config
+              cwd: /var/www/html/wordpress
+          services:
+            sysvinit:
+              httpd:
+                enabled: 'true'
+                ensureRunning: 'true'
+    Properties:
+      ImageId: !FindInMap 
+        - RegionMap
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AMItype
+          - !Ref InstanceType
+          - Arch
+      InstanceType: !Ref InstanceType
+      SecurityGroups:
+        - !Ref WpHostSG
+      KeyName: !Ref KeyName
+      UserData: !Base64 
+        'Fn::Join':
+          - ''
+          - - |
+              #!/bin/bash -xe
+            - |
+              yum update -y aws-cfn-bootstrap
+            - '/opt/aws/bin/cfn-init -v '
+            - '         --stack '
+            - !Ref 'AWS::StackName'
+            - '         --resource LaunchConfig '
+            - '         --configsets wordpress_install '
+            - '         --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+            - '/opt/aws/bin/cfn-signal -e $? '
+            - '         --stack '
+            - !Ref 'AWS::StackName'
+            - '         --resource WpEC2Group '
+            - '         --region '
+            - !Ref 'AWS::Region'
+            - |+
+
+  RDSDBSG:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Open database for access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '3306'
+          ToPort: '3306'
+          SourceSecurityGroupId: !Ref WpHostSG
+      VpcId: !Ref VPC
+
   RDSDB:
     Type: 'AWS::RDS::DBInstance'
     Properties:
