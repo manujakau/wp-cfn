@@ -450,6 +450,16 @@ Resources:
         MaxBatchSize: '1'
         PauseTime: PT5M
         WaitOnResourceSignals: 'true'
+  ScalingPolicy:
+    Type: 'AWS::AutoScaling::ScalingPolicy'
+    Properties:
+      AutoScalingGroupName: !Ref WpEC2Group
+      PolicyType: TargetTrackingScaling
+      TargetTrackingConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ASGAverageCPUUtilization
+        TargetValue: 80
+      EstimatedInstanceWarmup: 60
 
   LaunchConfig:
     Type: 'AWS::AutoScaling::LaunchConfiguration'
