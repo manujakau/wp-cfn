@@ -5,10 +5,10 @@
 ![WordPress](https://user-images.githubusercontent.com/44127516/100247762-5a589080-2f43-11eb-80a7-8e15d48851ae.jpg)
 
 diagram keys:
-  IGW - Internet Gateway
-  ALB - Application Load Balancer
-  NAT GW - Nat Gateway
-  ASG - Auto Scaling Group
+  IGW - Internet Gateway, 
+  ALB - Application Load Balancer, 
+  NAT GW - Nat Gateway, 
+  ASG - Auto Scaling Group, 
   AZ0-1 - Availability Zone 1 & 2
   
 
