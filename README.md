@@ -11,8 +11,8 @@ diagram keys:
   ASG - Auto Scaling Group
   AZ0-1 - Availability Zone 1 & 2
   
-  
-  # Deploy WordPress Stack
+
+# Deploy WordPress Stack
   
     1. Install aws cli
     2. Configure AWS profile
@@ -20,4 +20,10 @@ diagram keys:
         ex: aws cloudformation create-stack --stack-name WordPress-Infra --template-body file://main.yaml --profile <aws prefile here> --region eu-central-1
         
     *Also stack can be deploy via AWS Cloud-Formation GUI.
+
+# Troubleshoot Request Timeout's
+  
+ If load-balancer url getting timeout, check WordPress VPC default security group. If the security group ingress referring to itself like first image, then modify the ingress to allow all traffic like in second image.
+ 
+![VPC-defaultSG](https://user-images.githubusercontent.com/44127516/100249708-8b39c500-2f45-11eb-9b65-e02ed8248ecc.png)
 
