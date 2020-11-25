@@ -451,6 +451,29 @@ Resources:
         PauseTime: PT5M
         WaitOnResourceSignals: 'true'
 
+  RDSDB:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      DBName: !Ref DBNAME
+      Engine: MySQL
+      MultiAZ: !Ref MultiAZDatabase
+      MasterUsername: !Ref DBUSER
+      MasterUserPassword: !Ref DBPASSWORD
+      DBInstanceClass: !Ref DBClass
+      AllocatedStorage: !Ref DBAllocatedStorage
+      VPCSecurityGroups:
+        - !GetAtt 
+          - RDSDBSG
+          - GroupId
+      DBSubnetGroupName: !Ref RDSDBSubnets
+      StorageType: 'gp2'
+  RDSDBSubnets:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: 'RDS DB subnets'
+      SubnetIds:
+        - !Ref DBSub1
+        - !Ref DBSub2
 
 Outputs:
   SiteURL:
