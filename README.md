@@ -18,8 +18,9 @@ diagram keys:
     2. Configure AWS profile
     3. Run "aws cloudformation create-stack" from master branch.
         ex: aws cloudformation create-stack --stack-name WordPress-Infra --template-body file://main.yaml --profile <aws prefile here> --region eu-central-1
-        
-    *Also stack can be deploy via AWS Cloud-Formation GUI.
+    
+    *Stack ami mappings configured only for eu-central-1 and eu-north-1. Need to be update which is mapped ami's upon deploying in differnt region.
+    **Also stack can be deploy via AWS Cloud-Formation GUI.
 
 ## Troubleshoot Request Timeout
   
