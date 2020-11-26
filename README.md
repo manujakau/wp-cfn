@@ -2,7 +2,7 @@
 
 ## WordPress Stack Infrastructure
 
-![WordPress](https://user-images.githubusercontent.com/44127516/100272958-a962ed80-2f64-11eb-89b1-5ce8a7d4a8a8.jpg)
+![WordPress](https://user-images.githubusercontent.com/44127516/100315512-6d11aa80-2fc1-11eb-9044-0796ba89f0d1.jpg)
 
 diagram keys:
   IGW - Internet Gateway, 
