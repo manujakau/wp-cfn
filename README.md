@@ -11,6 +11,37 @@ diagram keys:
   ASG - Auto Scaling Group, 
   AZ0-1 - Availability Zone 1 & 2
   
+Resource Aspects within Code:
+
+  •	VPC – Virtual Private Cloud
+  •	IGW – Internet Gateway
+  •	IGWAtt - Internet Gateway Attachment
+  •	PubSub1 – Public Subnet One
+  •	PubSub2 – Public Subnet Two
+  •	PrivSub1 – Private Subnet One
+  •	PrivSub2 – Private Subnet Two
+  •	DBSub1 – Private Subnet Database One
+  •	DBSub2 – Private Subnet Database Two
+  •	NatGWEIP1 – Nat Gateway Elastic IP 1
+  •	NatGWEIP2 - Nat Gateway Elastic IP 2
+  •	NatGW1 – Nat Gateway One
+  •	NatGW2 – Nat Gateway Two
+  •	PubRTB1 – Public Route Table One
+  •	PrivRTB1 – Private Route Table One
+  •	PrivRTB2 – Private Route Table Two
+  •	DBRTB1 – Database Route Table One
+  •	DBRTB2 – Database Route Table Two
+  •	ALB – Application Load Balancer
+  •	WpHostSG – WordPress EC2 Security Group
+  •	WpEC2Group – WordPress EC2 Auto Scaling Group
+  •	ScalingPolicy – Auto Scale Base on system load
+  •	LaunchConfig – Auto Scaling EC2 launch Configuration
+  •	 RDSDBSG – Database Security Group
+  •	RDSDB – RDS MySQL Database
+  •	BastionHost – Bastion Host for ssh into WordPress EC2
+  •	WPbastionSG – Bastion Host Security Group
+  •	SiteURL – WordPress URL
+
 
 ## Deploy WordPress Stack
   
