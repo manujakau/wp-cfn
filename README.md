@@ -17,7 +17,7 @@ diagram keys:
     1. Install aws cli
     2. Configure AWS profile
     3. Update default public key name in main.yaml paramerter section [parameter - KeyNmae].
-    4. Change wordpress DB variables in paramerter section [parameter - DBNAME, DBUSER, DBPASSWORD].
+    4. Change default wordpress DB variables in paramerter section [parameter - DBNAME, DBUSER, DBPASSWORD].
     5. Run "aws cloudformation create-stack" from master branch.
         ex: aws cloudformation create-stack --stack-name WordPress-Infra --template-body file://main.yaml --profile <aws prefile here> --region eu-central-1
     
