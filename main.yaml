@@ -150,6 +150,12 @@ Mappings:
       HVM64: ami-0de4b8910494dba0f
       HVMG2: ami-32d55b4c
 
+  RegionMap1:
+    eu-central-1:
+      HVM64: ami-009b16df9fcaac611
+    eu-north-1:
+      HVM64: ami-08bc26bf92a90ba04
+
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -634,7 +640,13 @@ Resources:
   BastionHost:
     Type: 'AWS::EC2::Instance'
     Properties:
-      ImageId: ami-009b16df9fcaac611
+      ImageId: !FindInMap 
+        - RegionMap1
+        - !Ref 'AWS::Region'
+        - !FindInMap 
+          - AMItype
+          - !Ref InstanceType
+          - Arch
       InstanceType: t2.micro
       KeyName: SAA-C01
       Monitoring: 'true'
