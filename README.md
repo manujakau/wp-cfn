@@ -17,7 +17,8 @@ diagram keys:
     1. Install aws cli
     2. Configure AWS profile
     3. Update default public key name in main.yaml paramerter section [parameter - KeyNmae].
-    4. Run "aws cloudformation create-stack" from master branch.
+    4. Change wordpress DB variables in paramerter section [parameter - DBNAME, DBUSER, DBPASSWORD].
+    5. Run "aws cloudformation create-stack" from master branch.
         ex: aws cloudformation create-stack --stack-name WordPress-Infra --template-body file://main.yaml --profile <aws prefile here> --region eu-central-1
     
     *Stack ami mappings configured only for eu-central-1 and eu-north-1. Need to be update which is mapped ami's upon deploying in differnt region.
