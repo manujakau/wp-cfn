@@ -36,7 +36,7 @@ Resource Aspects within Code:
     •	WpEC2Group – WordPress EC2 Auto Scaling Group
     •	ScalingPolicy – Auto Scale Base on system load
     •	LaunchConfig – Auto Scaling EC2 launch Configuration
-    •	 RDSDBSG – Database Security Group
+    •	RDSDBSG – Database Security Group
     •	RDSDB – RDS MySQL Database
     •	BastionHost – Bastion Host for ssh into WordPress EC2
     •	WPbastionSG – Bastion Host Security Group
