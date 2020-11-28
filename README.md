@@ -58,7 +58,7 @@ Resource Aspects within Code:
 
 ## Troubleshoot Request Timeout
   
- If load-balancer url getting timeout, check WordPress VPC default security group. If the security group ingress referring to itself like first image, then modify the ingress to allow all traffic like in second image.
+ If WordPress url getting timeout, check WordPress VPC default security group. If the security group ingress referring to itself like first image, then modify the ingress to allow all traffic like in second image.
  
 ![VPC-defaultSG](https://user-images.githubusercontent.com/44127516/100249708-8b39c500-2f45-11eb-9b65-e02ed8248ecc.png)
 
