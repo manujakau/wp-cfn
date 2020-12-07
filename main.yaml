@@ -60,13 +60,10 @@ Parameters:
   DBClass:
     Description: DB Type
     Type: String
-    Default: db.t2.medium
+    Default: db.t3.medium
     AllowedValues:
-      - db.t1.micro
-      - db.t2.micro
-      - db.t2.small
-      - db.t2.medium
-      - db.t2.large
+      - db.t3.small
+      - db.t3.medium
 
   DBAllocatedStorage:
     Default: '5'
