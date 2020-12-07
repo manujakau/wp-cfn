@@ -111,31 +111,27 @@ Parameters:
 
 Mappings:
   AMItype:
-    t1.micro:
+    t3.nano:
       Arch: HVM64
-    t2.nano:
+    t3.micro:
       Arch: HVM64
-    t2.micro:
+    t3.small:
       Arch: HVM64
-    t2.small:
+    t3.medium:
       Arch: HVM64
-    t2.medium:
-      Arch: HVM64
-    t2.large:
+    t3.large:
       Arch: HVM64
 
   AMItype2:
-    t1.micro:
+    t3.nano:
       Arch: NATHVM64
-    t2.nano:
+    t3.micro:
       Arch: NATHVM64
-    t2.micro:
+    t3.small:
       Arch: NATHVM64
-    t2.small:
+    t3.medium:
       Arch: NATHVM64
-    t2.medium:
-      Arch: NATHVM64
-    t2.large:
+    t3.large:
       Arch: NATHVM64
 
   RegionMap:
