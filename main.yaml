@@ -647,8 +647,8 @@ Resources:
           - AMItype
           - !Ref InstanceType
           - Arch
-      InstanceType: t2.micro
-      KeyName: SAA-C01
+      InstanceType: t3.micro
+      KeyName: !Ref KeyName
       Monitoring: 'true'
       NetworkInterfaces:
         - DeleteOnTermination: 'true'
